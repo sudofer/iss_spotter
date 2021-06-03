@@ -14,16 +14,39 @@ const fetchMyIP = function (callback) {
     function (error, response, body) {
       if (response.statusCode !== 200) {
         const msg = `Status Code ${response.statusCode} when fetching IP. Response: ${body}`;
-        callback(Error(msg), null);
-        return;
+        return callback(Error(msg), null);
       }
       if (!error) {
-        callback(null, body);
+        const ip = JSON.parse(body).ip;
+        return callback(null, ip);
       } else {
-        callback(error, null);
+        return callback(error, null);
       }
     }
   );
 };
 
-module.exports = { fetchMyIP };
+const fetchCoordsByIP = (ip, callback) => {
+  request(
+    `https://freegeoip.app/json/invalidIPHere`,
+    function (error, response, body) {
+      if (response.statusCode !== 200) {
+        const msg = `Status Code ${response.statusCode} when fetching IP. Response: ${body}`;
+        return callback(msg, null);
+      }
+      if (error) {
+        return callback(error, null);
+      } else {
+        const parsed = JSON.parse(body);
+        const lat = parsed.latitude;
+        const long = parsed.longitude;
+        // const coords = {};
+        // coords["lat"] = lat;
+        // coords["long"] = long;
+        return callback(null, { lat, long });
+      }
+    }
+  );
+};
+
+module.exports = { fetchMyIP, fetchCoordsByIP };

@@ -1,5 +1,5 @@
 // index.js
-const { fetchMyIP } = require("./iss");
+const { fetchMyIP, fetchCoordsByIP } = require("./iss");
 
 fetchMyIP((error, ip) => {
   if (error) {
@@ -7,5 +7,13 @@ fetchMyIP((error, ip) => {
     return;
   }
 
-  console.log("It worked! Your IP is", JSON.parse(ip).ip);
+  console.log("It worked! Your IP is", ip);
+
+  fetchCoordsByIP(ip, (error, coords) => {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log(coords);
+    }
+  });
 });
