@@ -27,8 +27,28 @@ const fetchMyIP = function (callback) {
 };
 
 const fetchCoordsByIP = (ip, callback) => {
+  request(`https://freegeoip.app/json/${ip}`, function (error, response, body) {
+    if (response.statusCode !== 200) {
+      const msg = `Status Code ${response.statusCode} when fetching IP. Response: ${body}`;
+      return callback(msg, null);
+    }
+    if (error) {
+      return callback(error, null);
+    } else {
+      const parsed = JSON.parse(body);
+      const lat = parsed.latitude;
+      const long = parsed.longitude;
+      const coords = {};
+      coords["latitude"] = lat;
+      coords["longitude"] = long;
+      return callback(null, coords);
+    }
+  });
+};
+
+const fetchISSFlyOverTimes = (coords, callback) => {
   request(
-    `https://freegeoip.app/json/invalidIPHere`,
+    `http://api.open-notify.org/iss-pass.json?lat=${coords.latitude}&lon=${coords.longitude}`,
     function (error, response, body) {
       if (response.statusCode !== 200) {
         const msg = `Status Code ${response.statusCode} when fetching IP. Response: ${body}`;
@@ -37,16 +57,37 @@ const fetchCoordsByIP = (ip, callback) => {
       if (error) {
         return callback(error, null);
       } else {
-        const parsed = JSON.parse(body);
-        const lat = parsed.latitude;
-        const long = parsed.longitude;
-        // const coords = {};
-        // coords["lat"] = lat;
-        // coords["long"] = long;
-        return callback(null, { lat, long });
+        return callback(null, body);
       }
     }
   );
 };
 
-module.exports = { fetchMyIP, fetchCoordsByIP };
+const nextISSTimesForMyLocation = (callback) => {
+  fetchMyIP((error, ip) => {
+    if (error) {
+      callback(error, nul);
+    } else {
+      callback(null, ip);
+    }
+
+    fetchCoordsByIP(ip, (error, coords) => {
+      if (error) {
+        callback(error, null);
+      } else {
+        callback(null, coords);
+      }
+      fetchISSFlyOverTimes(coords, (error, data) => {
+        if (error) {
+          callback(error, null);
+        } else {
+          callback(null, JSON.parse(data).response);
+        }
+      });
+    });
+  });
+};
+
+module.exports = {
+  nextISSTimesForMyLocation,
+};
